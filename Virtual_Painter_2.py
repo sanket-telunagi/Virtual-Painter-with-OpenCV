@@ -5,7 +5,7 @@ import mediapipe as mp
 
 def findPosition(img, results,color = (255,0, 255),handNo = 0, draw = True):
     lmList = []
-
+    # handNo = 0 => right hand
     if results.multi_hand_landmarks:
         myHand = results.multi_hand_landmarks[handNo]
         for id, lm in enumerate(myHand.landmark) :
@@ -16,6 +16,35 @@ def findPosition(img, results,color = (255,0, 255),handNo = 0, draw = True):
                 cv2.circle(img,(cx,cy), 15, color, cv2.FILLED)
     
     return lmList
+
+# detect which finger up
+def fingerUp(land_mark_list,results,handNo = 0) :
+    tip_IDs = [4,8,12,16,20]  # tip ids of each finger
+    lm_list = land_mark_list  # landmark list
+    fingers = []
+    if results.multi_hand_landmarks :
+        
+        # thumb 
+        if handNo == 0 :
+            if lm_list[tip_IDs[0]][0] > lm_list[tip_IDs[0]-1][0] :
+                fingers.append(1)
+            else :
+                fingers.append(0)
+        else :
+            if lm_list[tip_IDs[0]][0] < lm_list[tip_IDs[0]-1][0] :
+                fingers.append(1)
+            else :
+                fingers.append(0) 
+
+        # 4 fingers
+        for id in range(1,5) :
+            if lm_list[tip_IDs[id]][1] < lm_list[tip_IDs[id] - 2][1] :
+                fingers.append(1)
+            else :
+                fingers.append(0)
+    # return fingers list
+    return fingers   
+    
 
 folder_path = "Assets"
 mylist = os.listdir(folder_path)
@@ -34,7 +63,7 @@ mp_hands = mp.solutions.hands
 cap = cv2.VideoCapture(0)
 with mp_hands.Hands(min_detection_confidence=0.8, min_tracking_confidence = 0.5) as hands :
     counter = 0
-    while cap.isOpened() and counter != 100:
+    while cap.isOpened() and counter != 200:
         ret,frame = cap.read()
 
         # flipping image
@@ -57,9 +86,15 @@ with mp_hands.Hands(min_detection_confidence=0.8, min_tracking_confidence = 0.5)
 
         lmList = findPosition(img, results, draw=False)
 
-        print(lmList)
+        # index and middle finger landmarks 
+        if len(lmList) != 0 :
+            # tip of index and middle finger
+            x1, y1 = lmList[8][1:]
+            x2, y2 = lmList[12][1:]
 
-        
+        # check which fingers are up
+        fingers = fingerUp(lmList,results)
+        print(fingers)
 
         # detections 
         # print(results)
