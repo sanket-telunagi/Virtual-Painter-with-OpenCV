@@ -198,7 +198,6 @@ with mp_hands.Hands(min_detection_confidence=0.8, min_tracking_confidence = 0.5)
         
         imgs[0:125,0:1280] = header
         cv2.imshow("Hand Tracking",imgs)
-        cv2.imshow("canvas",img_canvas)
         if cv2.waitKey(10) & 0xFF == ord('q') :
             break
         counter += 1
